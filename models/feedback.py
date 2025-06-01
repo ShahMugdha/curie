@@ -1,7 +1,5 @@
-# curie/models/feedback.py
-
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 # Mapping of question "type" to actual feedback model field names
@@ -27,29 +25,30 @@ FEEDBACK_TYPE_TO_FIELD = {
 class UserFeedback(BaseModel):
     user_id: str
     timestamp: Optional[datetime] = None
-    
-    sleep_feedback: Optional[str] = None
-    stress_feedback: Optional[str] = None
-    meal_feedback: Optional[str] = None
-    focus_feedback: Optional[str] = None
-    opinion: Optional[str] = None
-    tags: Optional[list[str]] = []
+
+    # Physical/Mental State
+    sleep_feedback: Optional[str] = "Slept for 6-7 hours, feeling rested"
+    stress_feedback: Optional[str] = "Mild stress due to work, manageable"
+    meal_feedback: Optional[str] = "Ate 2 proper meals today, moderately healthy"
+    focus_feedback: Optional[str] = "Able to focus well for the last 2 hours"
+    opinion: Optional[str] = "Feeling curious and open to learning today"
+    tags: Optional[List[str]] = ["focused", "open-minded"]
 
     # Cognitive + Interests
-    books: Optional[str] = None
-    shows_movies: Optional[str] = None
-    recent_topics: Optional[str] = None
-    political_interest: Optional[str] = None
-    communities: Optional[str] = None
-    influencers: Optional[str] = None
+    books: Optional[str] = "Reading 'Deep Work' by Cal Newport"
+    shows_movies: Optional[str] = "Watched a documentary on Netflix"
+    recent_topics: Optional[str] = "Interested in productivity tools and AI startups"
+    political_interest: Optional[str] = "Interested in economic reforms and tech policy"
+    communities: Optional[str] = "Active on IndieHackers and r/Startups"
+    influencers: Optional[str] = "Following Naval Ravikant and Ali Abdaal"
 
     # Behavioral
-    productivity_feedback: Optional[str] = None
-    social_time_feedback: Optional[str] = None
-    study_time_feedback: Optional[str] = None
-    reading_time_feedback: Optional[str] = None
-    break_time_feedback: Optional[str] = None
-    meal_time_followup: Optional[str] = None
+    productivity_feedback: Optional[str] = "Completed most planned tasks today"
+    social_time_feedback: Optional[str] = "Spent some time with friends offline"
+    study_time_feedback: Optional[str] = "Studied for 1 hour in the morning"
+    reading_time_feedback: Optional[str] = "Read 20 pages post-lunch"
+    break_time_feedback: Optional[str] = "Took two 10-minute breaks between work blocks"
+    meal_time_followup: Optional[str] = "Lunch delayed by 30 mins, breakfast on time"
 
     source: Optional[str] = "reinforcement"
     ready_for_evaluation: Optional[bool] = True

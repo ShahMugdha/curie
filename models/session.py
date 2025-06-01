@@ -33,4 +33,4 @@ class UserSession(BaseModel):
     discipline_score: Optional[int]
     stress_level: Optional[int]
     sleep_score: Optional[int]
-    active: bool = True
+    status: str = "pending"

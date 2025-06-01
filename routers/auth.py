@@ -16,7 +16,7 @@ def register_user(profile: UserProfile):
     # Insert user profile (only long-term data)
     response = supabase.table("users").insert(profile.dict()).execute()
 
-    if response.status_code != 201:
-        raise HTTPException(status_code=500, detail="Failed to register user")
+    if response.data:
+        return {"message": "User registered successfully", "data": response.data}
 
-    return {"message": "User registered successfully"}
+    raise HTTPException(status_code=500, detail="Failed to register user")

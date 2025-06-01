@@ -8,6 +8,7 @@ from routers.reinforce import router as reinforce_router
 from routers.feedback_prompt import router as feedback_prompt_router
 from routers.feed import router as feed_router  # Optional
 from routers.auth import router as register_router  # New
+from routers.first_feed import router as first_feed_router
 
 app = FastAPI(
     title="Curie Content Agent",
@@ -29,6 +30,7 @@ app.include_router(register_router, prefix="/api", tags=["Onboarding"])
 app.include_router(feedback_prompt_router, prefix="/api", tags=["Feedback"])
 app.include_router(reinforce_router, prefix="/api", tags=["Reinforcement"])
 app.include_router(feed_router, prefix="/api", tags=["Feed"])  # When implemented
+app.include_router(first_feed_router, prefix="/api", tags=["FirstFeed"])
 
 @app.get("/")
 def health_check():

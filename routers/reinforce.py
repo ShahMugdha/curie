@@ -11,10 +11,10 @@ router = APIRouter()
 def reinforce(feedback: UserFeedback):
     # 1. Insert feedback
     feedback_dict = feedback.dict()
-    feedback_dict["timestamp"] = feedback_dict["timestamp"] or datetime.utcnow()
+    feedback_dict["timestamp"] = feedback_dict["timestamp"].isoformat() or datetime.utcnow().isoformat()
 
     insert_response = supabase.table("user_feedback").insert(feedback_dict).execute()
-    if insert_response.error:
+    if not insert_response.data:
         raise HTTPException(status_code=500, detail="Failed to insert feedback")
 
     feedback_id = insert_response.data[0]["id"]
@@ -50,7 +50,7 @@ def reinforce(feedback: UserFeedback):
         .execute()
     )
 
-    now = datetime.utcnow()
+    now = datetime.utcnow().isoformat()
     session_payload = {
         "user_id": feedback.user_id,
         "feedback_id": feedback_id,
@@ -72,12 +72,12 @@ def reinforce(feedback: UserFeedback):
     if pending_resp.data:
         session_id = pending_resp.data[0]["id"]
         update_response = supabase.table("user_sessions").update(session_payload).eq("id", session_id).execute()
-        if update_response.error:
+        if not update_response.data:
             raise HTTPException(status_code=500, detail="Failed to update pending session")
         session = update_response.data[0]
     else:
         insert_session = supabase.table("user_sessions").insert(session_payload).execute()
-        if insert_session.error:
+        if not insert_session.data:
             raise HTTPException(status_code=500, detail="Failed to insert new session")
         session = insert_session.data[0]
 
