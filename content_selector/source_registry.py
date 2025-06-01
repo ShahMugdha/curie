@@ -4,10 +4,10 @@ from content_sources.substack import fetch_substack_posts
 from content_sources.vsco import fetch_vsco_links
 from content_sources.news_mix import fetch_news_articles
 from content_sources.youtube import fetch_youtube_videos
-from content_sources.reddit import fetch_reddit_posts
-from content_sources.hackernews import fetch_hackernews_posts
+# from content_sources.reddit import fetch_reddit_posts
+from content_sources.hackernews import fetch_hackernews_stories
 from content_sources.goodreads import fetch_goodreads_books
-from content_sources.spotify import fetch_spotify_episodes
+from content_sources.spotify import fetch_spotify_podcasts
 
 CATEGORY_SOURCE_MAP: Dict[str, List[Callable[[int], List[dict]]]] = {
     "art": [
@@ -17,7 +17,7 @@ CATEGORY_SOURCE_MAP: Dict[str, List[Callable[[int], List[dict]]]] = {
     ],
     "tech": [
         lambda limit: fetch_medium_posts("startup_tech", limit),
-        lambda limit: fetch_hackernews_posts(limit),
+        lambda limit: fetch_hackernews_stories(limit),
         lambda limit: fetch_youtube_videos("tech news", limit),
     ],
     "ai": [
@@ -28,7 +28,7 @@ CATEGORY_SOURCE_MAP: Dict[str, List[Callable[[int], List[dict]]]] = {
     "news": [
         lambda limit: fetch_news_articles(limit),
         lambda limit: fetch_youtube_videos("current events", limit),
-        lambda limit: fetch_reddit_posts(["worldnews", "politics"], limit // 2),
+        # lambda limit: fetch_reddit_posts(["worldnews", "politics"], limit // 2),
     ],
     "books": [
         lambda limit: fetch_youtube_videos("book review", limit),
@@ -37,17 +37,17 @@ CATEGORY_SOURCE_MAP: Dict[str, List[Callable[[int], List[dict]]]] = {
     ],
     "sports": [
         lambda limit: fetch_youtube_videos("sports highlights", limit),
-        lambda limit: fetch_reddit_posts(["sports", "soccer"], limit // 2),
+        # lambda limit: fetch_reddit_posts(["sports", "soccer"], limit // 2),
         lambda limit: fetch_substack_posts("sports", limit),
     ],
     "music": [
-        lambda limit: fetch_spotify_episodes("music", limit),
+        lambda limit: fetch_spotify_podcasts("music", limit),
         lambda limit: fetch_youtube_videos("top music", limit),
-        lambda limit: fetch_reddit_posts(["music", "listentothis"], limit // 2),
+        # lambda limit: fetch_reddit_posts(["music", "listentothis"], limit // 2),
     ],
     "cinema": [
         lambda limit: fetch_youtube_videos("film essays", limit),
-        lambda limit: fetch_reddit_posts(["movies", "TrueFilm"], limit // 2),
+        # lambda limit: fetch_reddit_posts(["movies", "TrueFilm"], limit // 2),
         lambda limit: fetch_substack_posts("cinema", limit),
     ],
 }
