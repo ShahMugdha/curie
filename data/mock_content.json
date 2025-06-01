@@ -1,0 +1,26 @@
+[
+  {
+    "title": "How the Internet Works (5-min explainer)",
+    "platform": "YouTube",
+    "intent": "ai_learning",
+    "tone": "exploratory",
+    "duration": 5,
+    "link": "https://youtube.com/watch?v=abc123"
+  },
+  {
+    "title": "Lo-fi to chill to",
+    "platform": "Spotify",
+    "intent": "creative_inspo",
+    "tone": "casual",
+    "duration": 30,
+    "link": "https://open.spotify.com/track/abc456"
+  },
+  {
+    "title": "Productivity meme thread",
+    "platform": "Reddit",
+    "intent": "career_growth",
+    "tone": "casual",
+    "duration": 5,
+    "link": "https://reddit.com/r/productivity/comments/abc"
+  }
+]
