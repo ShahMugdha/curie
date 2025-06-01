@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers.reinforce import router as reinforce_router
 from routers.feedback_prompt import router as feedback_prompt_router
 from routers.feed import router as feed_router  # Optional
-from routers.register import router as register_router  # New
+from routers.auth import router as register_router  # New
 
 app = FastAPI(
     title="Curie Content Agent",
