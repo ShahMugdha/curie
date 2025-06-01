@@ -1,12 +1,14 @@
-from fastapi import APIRouter, HTTPException
+# routers/feed.py
+
+from fastapi import APIRouter, HTTPException, Query
 from supabase_client import supabase
-from agent.content_selector.content_router import fetch_all_content_by_context
+from content_selector.content_router import fetch_all_content_by_session
 
 router = APIRouter()
 
 @router.get("/feed")
-def generate_feed(user_id: str):
-    # 1. Fetch the latest PENDING session
+def generate_feed(user_id: str = Query(...)):
+    # 1. Get latest pending session
     session_resp = (
         supabase.table("user_sessions")
         .select("*")
@@ -18,22 +20,23 @@ def generate_feed(user_id: str):
     )
 
     if not session_resp.data:
-        raise HTTPException(status_code=404, detail="No pending session found")
+        raise HTTPException(status_code=404, detail="No pending session found.")
 
     session = session_resp.data[0]
-    session_id = session["id"]
 
-    # 2. Mark all current ACTIVE sessions as inactive
-    supabase.table("user_sessions").update({"status": "inactive"}).eq("user_id", user_id).eq("status", "active").execute()
+    # 2. Use session context for content sourcing
+    context = session.get("context", {})
+    if not context:
+        raise HTTPException(status_code=400, detail="Missing context in session.")
 
-    # 3. Promote pending session to ACTIVE
-    supabase.table("user_sessions").update({"status": "active"}).eq("id", session_id).execute()
+    content = fetch_all_content_by_session(session, limit=20)
 
-    # 4. Fetch feed using intelligent context
-    context = session["context"]
-    feed = fetch_all_content_by_context(context)
+    # 3. Mark session as active
+    supabase.table("user_sessions").update({"status": "active"}).eq("id", session["id"]).execute()
 
     return {
+        "message": "Feed generated successfully",
         "session": session,
-        "feed": feed
+        "context": context,
+        "feed": content
     }
