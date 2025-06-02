@@ -24,11 +24,6 @@ def generate_feed(user_id: str = Query(...)):
 
     session = session_resp.data[0]
 
-    # 2. Use session context for content sourcing
-    context = session.get("context", {})
-    if not context:
-        raise HTTPException(status_code=400, detail="Missing context in session.")
-
     content = fetch_all_content_by_session(session, limit=20)
 
     # 3. Mark session as active
@@ -37,6 +32,5 @@ def generate_feed(user_id: str = Query(...)):
     return {
         "message": "Feed generated successfully",
         "session": session,
-        "context": context,
         "feed": content
     }

@@ -4,7 +4,6 @@ import random
 
 def get_priority_tags_from_session(session: dict) -> List[str]:
     tags = set()
-    context = session.get("context", {})
     intent = session.get("intent", "explore")
     tone = session.get("tone", "neutral")
     mood = session.get("mood", "neutral")
@@ -13,8 +12,6 @@ def get_priority_tags_from_session(session: dict) -> List[str]:
     discipline = session.get("discipline_score", 50)
     sleep = session.get("sleep_score", 50)
     stress = session.get("stress_level", 50)
-    topics = context.get("topics", [])
-    personality = context.get("personality", "balanced")
 
     # Intent-driven tags
     if intent == "creative_inspo":
@@ -67,9 +64,6 @@ def get_priority_tags_from_session(session: dict) -> List[str]:
         tags.update(["relax", "art", "music"])
     elif mood == "bored":
         tags.update(["memes", "trending", "weird facts"])
-
-    # Include user-chosen topics
-    tags.update(topics)
 
     return list(tags)
 

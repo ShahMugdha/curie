@@ -55,7 +55,6 @@ def reinforce(feedback: UserFeedback):
         "user_id": feedback.user_id,
         "feedback_id": feedback_id,
         "created_at": now,
-        "context": evaluation_result.get("context", {}),
         "mood": evaluation_result.get("mood"),
         "fatigue_level": evaluation_result.get("fatigue_level"),
         "curiosity_score": evaluation_result.get("curiosity_score"),
@@ -83,6 +82,5 @@ def reinforce(feedback: UserFeedback):
 
     return {
         "message": "Feedback saved and session evaluated",
-        "session": session,
-        "context": evaluation_result.get("context")
+        "session": session
     }

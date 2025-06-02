@@ -1,28 +1,64 @@
 # agent/llm.py
 
-import openai
+from openai import OpenAI
 import time
 import json
 from config import Config
 from pydantic import BaseModel, ValidationError
 from datetime import datetime
+from typing import Optional, List
 
-openai.api_key = Config.OPENAI_API_KEY
+client = OpenAI(api_key=Config.OPENAI_API_KEY)
 
 # -------------------------
 # Pydantic response schema
 # -------------------------
 
 class LLMEvaluationResult(BaseModel):
-    mood: str
-    fatigue_level: str
-    curiosity_score: int
-    tone: str
-    intent: str
-    time_budget: int
-    discipline_score: int
-    stress_level: int
-    sleep_score: int
+    mood: Optional[str]
+    fatigue_level: Optional[int]
+    curiosity_score: Optional[int]
+    tone: Optional[str]
+    intent: Optional[str]
+    time_budget: Optional[int]
+    discipline_score: Optional[int]
+    stress_level: Optional[int]
+    sleep_score: Optional[int]
+
+
+def flatten_if_wrapped(data: dict) -> dict:
+    """If response is wrapped inside a single key, unwrap it."""
+    if len(data) == 1 and isinstance(list(data.values())[0], dict):
+        return list(data.values())[0]
+    return data
+
+def clean_llm_output(raw: dict) -> dict:
+    def coerce_int(val, fallback=0):
+        try:
+            return int(val)
+        except:
+            return fallback
+
+    def coerce_float(val, fallback=0.0):
+        try:
+            return float(val)
+        except:
+            return fallback
+
+    cleaned = flatten_if_wrapped(raw)
+
+    return {
+        "mood": str(cleaned.get("mood", "neutral")),
+        "fatigue_level": coerce_int(cleaned.get("fatigue_level")),
+        "curiosity_score": coerce_int(cleaned.get("curiosity_score")),
+        "discipline_score": coerce_int(cleaned.get("discipline_score")),
+        "stress_level": coerce_int(cleaned.get("stress_level")),
+        "sleep_score": coerce_int(cleaned.get("sleep_score")),
+        "tone": str(cleaned.get("tone", "neutral")),
+        "intent": str(cleaned.get("intent", "general")),
+        "time_budget": coerce_int(cleaned.get("time_budget")),
+    }
+
 
 # -------------------------
 # Prompt Template
@@ -33,13 +69,10 @@ def build_prompt(eval_input: dict) -> str:
     feedback = eval_input.get("feedback", {})
     trends = eval_input.get("session_trends", {})
 
-    prompt = f"""
-You are an intelligent evaluator. Use the following data to infer the user's current emotional and mental state, and produce scores for:
+    prompt = f"""You are an intelligent evaluator. Use the following data to infer the user's current emotional and mental state, and produce scores for:
 
 - mood: 1–10  
   Represents emotional state; 1 = very low/negative, 10 = very happy/positive
-
-- current_time: current time,
 
 - fatigue_level: 1–10  
   Measures physical or mental tiredness; 1 = fully energized, 10 = extremely tired
@@ -65,39 +98,6 @@ You are an intelligent evaluator. Use the following data to infer the user's cur
 - time_budget: number (in minutes)  
   Estimated amount of time the user is willing to dedicate to content right now
 
-- discovery_style: one of [linear, exploratory, impulsive, research-driven, trend-aware]  
-  Represents how the user tends to discover new content or ideas
-
-- serendipity_flex: 0–1 (float)  
-  Indicates how open the user is to unexpected or off-topic content; 0 = only focused, 1 = open to anything
-
-- in_focus: boolean  
-  Whether the user is currently inside one of their defined focus blocks
-
-- in_break: boolean  
-  Whether the user is currently on a scheduled break time
-
-- slot_level: one of [deep, medium, shallow]  
-  Represents the expected cognitive depth the user can handle based on routine and current time
-
-- topics: list of strings  
-  Personalized themes or domains of interest (e.g. productivity, philosophy, frontend)
-
-- interests: list of strings  
-  Broader long-term interests across categories (e.g. tech, cinema, history, finance)
-
-- aspirations: list of strings  
-  Goals or future ambitions (e.g. build a startup, publish a book, crack UPSC)
-
-- personality: list of strings  
-  Tags like [reflective, analytical, optimistic] inferred from user profile or resume
-
-- discovery_style: string
-  Indicates how adventurous or structured the user is in content discovery.
-
-- work_type: string  
-  Describes the user’s primary working context (e.g. student, freelancer, full-time employee)
-
 
 Static Profile:
 - Work Type: {user.get('work_type')}
@@ -122,7 +122,18 @@ Recent Session Trends:
 - Fatigue change: {trends.get("fatigue_delta")}
 - Tone stability: {"Stable" if trends.get("tone_stability") else "Varied"}
 
-Now respond with scores and labels in a JSON format.
+Now respond in strict JSON format, like this:
+  "mood": "neutral",                     // string
+  "fatigue_level": 5,                   // integer
+  "curiosity_score": 50,               // integer
+  "discipline_score": 70,              // integer
+  "stress_level": 4,                   // integer
+  "sleep_score": 6,                    // integer
+  "tone": "thoughtful",                // string
+  "intent": "career_growth",           // string
+  "time_budget": 25,                   // integer
+Avoid putting the response inside another field like "data" or "user_emotional_and_mental_state". Just return the JSON object directly.
+
 """.strip()
 
     return prompt
@@ -136,15 +147,18 @@ def evaluate_metrics_with_llm(eval_input: dict) -> dict:
 
     for attempt in range(3):
         try:
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model="gpt-4",
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=300,
             )
 
-            content = response.choices[0].message["content"]
+            content = response.choices[0].message.content
             parsed = json.loads(content)
-            validated = LLMEvaluationResult(**parsed)
+            parsed_cleaned = clean_llm_output(parsed)
+            validated = LLMEvaluationResult(**parsed_cleaned)
+            print("[LLM RAW RESPONSE]", content)
+            print("[LLM PARSED CLEANED]", parsed_cleaned)
             return validated.dict()
 
         except (json.JSONDecodeError, ValidationError) as e:
@@ -166,22 +180,5 @@ def evaluate_metrics_with_llm(eval_input: dict) -> dict:
         "tone": "neutral",                   # playful, serious, thoughtful, energetic, relaxed, casual
         "intent": "general",                 # short tag (learn, relax, catch-up, etc.)
         "time_budget": 15,                   # in minutes
-        "current_time": datetime.utcnow().isoformat(),
-
-        # Extended fields
-        "discovery_style": "linear",         # linear, exploratory, impulsive, etc.
-        "serendipity_flex": 0.3,             # 0.0 to 1.0
-
-        # Time-sensitive flags (set to safe defaults)
-        "in_focus": False,
-        "in_break": False,
-        "slot_level": "shallow",            # deep, medium, shallow
-
-        # Content relevance drivers (can be pulled from static profile if available)
-        "topics": [],
-        "interests": [],
-        "aspirations": [],
-        "personality": [],
-        "work_type": "unknown"
     }
 
